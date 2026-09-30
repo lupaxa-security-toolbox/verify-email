@@ -1,0 +1,45 @@
+name: First-Time Contributor Greetings
+
+on:
+  pull_request:
+    types: [opened]
+    branches-ignore:
+      - 'dependabot/**'
+
+  issues:
+    types: [opened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  first-time-contributor-greeting:
+    name: First-Time Contributor Greetings
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-first-time-contributor-greetings.yml@master
+    secrets:
+      repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - first-time-contributor-greeting
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

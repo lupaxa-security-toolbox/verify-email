@@ -1,0 +1,42 @@
+# yamllint — MkDocs portal / GitHub Actions (Lupaxa defaults)
+extends: default
+
+ignore: |
+  site/
+  cursor-docs/
+
+rules:
+  # Project YAML omits the optional document-start marker.
+  document-start: disable
+
+  # Data files and workflow `uses:` lines include long URLs and prose.
+  line-length:
+    max: 160
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # GitHub Actions uses the key name `on:` (truthy token).
+  truthy:
+    allowed-values: ["true", "false", "yes", "no"]
+    check-keys: false
+
+  comments:
+    min-spaces-from-content: 1
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+
+  commas:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+
+  indentation:
+    spaces: consistent
+    indent-sequences: true
+    check-multi-line-strings: false

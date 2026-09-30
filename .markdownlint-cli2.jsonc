@@ -1,0 +1,9 @@
+{
+  // Used by the VS Code / Cursor markdownlint extension (Problems panel).
+  // Rule config continues to come from .markdownlint.yml.
+  "ignores": [
+    "cursor-docs/**",
+    "site/**",
+    "**/node_modules/**"
+  ]
+}

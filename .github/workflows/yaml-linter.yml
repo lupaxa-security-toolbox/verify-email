@@ -1,0 +1,50 @@
+name: YAML Linter
+
+on:
+  push:
+    paths:
+      - ".github/workflows/yaml-linter.yml"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - ".yamllint.yml"
+
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/yaml-linter.yml"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - ".yamllint.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  yaml-linter:
+    name: YAML Linter
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-yaml-linter.yml@master
+    secrets: inherit
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - yaml-linter
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

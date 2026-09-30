@@ -1,0 +1,60 @@
+name: Validate Makefiles
+
+on:
+  push:
+    paths:
+      - ".github/workflows/validate-makefiles.yml"
+      - "Makefile"
+      - "makefile"
+      - "GNUmakefile"
+      - "**/*.mk"
+      - "**/*.make"
+      - "Makefile.*"
+      - "checkmake.ini"
+
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/validate-makefiles.yml"
+      - "Makefile"
+      - "makefile"
+      - "GNUmakefile"
+      - "**/*.mk"
+      - "**/*.make"
+      - "Makefile.*"
+      - "checkmake.ini"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  validate-makefiles:
+    name: Validate Makefiles
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-makefile-linter.yml@master
+    with:
+      check_conventions: true
+      exclude_files: "^site/|^mkdocs/|^\\.makefiles/"
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - validate-makefiles
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

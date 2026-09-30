@@ -1,0 +1,68 @@
+name: Code Analysis
+
+on:
+  push:
+    paths:
+      - ".github/workflows/code-analysis.yml"
+      - "**/*.py"
+      - "pyproject.toml"
+      - "setup.cfg"
+      - "setup.py"
+      - "requirements*.txt"
+      - "poetry.lock"
+      - "Pipfile"
+      - "Pipfile.lock"
+      - "src/**"
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/code-analysis.yml"
+      - "**/*.py"
+      - "pyproject.toml"
+      - "setup.cfg"
+      - "setup.py"
+      - "requirements*.txt"
+      - "poetry.lock"
+      - "Pipfile"
+      - "Pipfile.lock"
+      - "src/**"
+  schedule:
+    - cron: "4 3 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  code-analysis:
+    name: Code Analysis
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-code-analysis.yml@master
+    with:
+      languages: "python"
+    secrets:
+      SLACK_CODEQL_WEBHOOK_URL: ${{ secrets.SLACK_CODEQL_WEBHOOK_URL }}
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - code-analysis
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

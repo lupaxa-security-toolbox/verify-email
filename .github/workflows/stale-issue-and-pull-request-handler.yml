@@ -1,0 +1,40 @@
+name: Stale Issue & Pull Request Handler
+
+on:
+  schedule:
+    - cron: "35 5 * * *"
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale-issue-and-pull-request-handler:
+    name: Run Stale Issue & PR Handler
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-stale-issue-and-pull-request-handler.yml@master
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - stale-issue-and-pull-request-handler
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,70 @@
+name: Generate Draft Release
+
+# Creates a *draft* GitHub Release so assets can be attached before publish.
+# Useful with immutable releases: draft stays mutable until you publish it.
+#
+# Not produced by makefile-skills versioning bumps. Use `make draft-tag` (creates
+# vX.Y.Z-draftN without changing current_version), a hand-made tag, or
+# workflow_dispatch against an existing tag.
+#
+# Triggers:
+#   - Manual: Actions → Generate Draft Release → Run workflow (enter tag)
+#   - Tag push: v1.2.3-draft1, v1.2.3-draft2, ...
+#
+# After review, publish the draft in the GitHub UI (or gh release edit --draft=false).
+# Do not delete and recreate the same tag/version if immutable releases are enabled.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-draft[0-9]+'
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing git tag to create a draft release for (e.g. v0.1.7)"
+        required: true
+        type: string
+      release_name:
+        description: "Optional release title override (defaults to the tag name)"
+        required: false
+        type: string
+        default: ""
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.tag || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  generate-draft-release:
+    name: Generate Draft Release
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-github-release-generator.yml@master
+    with:
+      tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+      release_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_name || '' }}
+      draft: true
+      prerelease: false
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - generate-draft-release
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

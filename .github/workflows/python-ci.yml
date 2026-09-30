@@ -1,0 +1,71 @@
+name: Python CI
+
+on:
+  push:
+    paths:
+      - ".github/workflows/python-ci.yml"
+      - "**/*.py"
+      - "pyproject.toml"
+      - "setup.cfg"
+      - "setup.py"
+      - "requirements*.txt"
+      - "poetry.lock"
+      - "Pipfile"
+      - "Pipfile.lock"
+      - "Makefile"
+      - "tox.ini"
+      - ".python-version"
+      - "src/**"
+      - "tests/**"
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/python-ci.yml"
+      - "**/*.py"
+      - "pyproject.toml"
+      - "setup.cfg"
+      - "setup.py"
+      - "requirements*.txt"
+      - "poetry.lock"
+      - "Pipfile"
+      - "Pipfile.lock"
+      - "Makefile"
+      - "tox.ini"
+      - ".python-version"
+      - "src/**"
+      - "tests/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  python-ci:
+    name: Lint & Test
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-python-makefile-ci.yml@master
+    secrets: inherit
+    with:
+      python-versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - python-ci
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

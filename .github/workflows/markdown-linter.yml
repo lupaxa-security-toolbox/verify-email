@@ -1,0 +1,52 @@
+name: Markdown Linter
+
+on:
+  push:
+    paths:
+      - ".github/workflows/markdown-linter.yml"
+      - "**/*.md"
+      - ".markdownlint.yml"
+      - ".markdownlintignore"
+      - ".markdownlint-cli2.jsonc"
+
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/markdown-linter.yml"
+      - "**/*.md"
+      - ".markdownlint.yml"
+      - ".markdownlintignore"
+      - ".markdownlint-cli2.jsonc"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  markdown-linter:
+    name: Markdown Linter
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-markdown-linter.yml@master
+    secrets: inherit
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - markdown-linter
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

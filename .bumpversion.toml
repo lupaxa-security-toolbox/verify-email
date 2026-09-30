@@ -1,0 +1,51 @@
+# Default version file for makefile-skills versioning (bump-my-version).
+# Defaults below are safe for local testing: no commit, no tag, no push.
+# When ready to release for real, uncomment the Git / hook settings noted below
+# and add [[tool.bumpversion.files]] entries for this project's version sources
+# (e.g. pyproject.toml, src/.../version.py).
+
+[tool.bumpversion]
+current_version = "0.0.0"
+
+# Treat the entire version as a single opaque string part: "version"
+parse = "(?P<version>.*)"
+serialize = [
+  "{version}",
+]
+
+# Default search/replace behaviour; file-specific overrides below
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+
+# Git integration — off by default so `make bump-*` can be tested without
+# creating commits/tags. To enable releases:
+#   1. Set allow_dirty / commit / tag as below (or uncomment the release block)
+#   2. Uncomment post_commit_hooks to push after bump
+allow_dirty = false
+commit = true
+message = "Release {new_version}"
+commit_args = ""
+
+tag = true
+# Signing: Lupaxa git config usually has commit.gpgsign + tag.gpgSign, so
+# commits/tags are signed by git itself. Leave sign_tags = false unless you
+# need bump-my-version to pass -s explicitly (no global tag.gpgSign).
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Release {new_version}"
+
+# Hooks: after committing + tagging, push commits + tags
+setup_hooks = []
+pre_commit_hooks = []
+post_commit_hooks = [
+  "git push",
+  "git push --tags",
+]
+
+[[tool.bumpversion.files]]
+filename = "src/lupaxa/verify_email/version.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'

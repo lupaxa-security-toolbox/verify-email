@@ -1,0 +1,46 @@
+name: Link Checker
+
+on:
+  push:
+    paths:
+      - ".github/workflows/link-checker.yml"
+      - "**/*.md"
+
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - ".github/workflows/link-checker.yml"
+      - "**/*.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  link-checker:
+    name: Link Checker
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-link-checker.yml@master
+    secrets: inherit
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - link-checker
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

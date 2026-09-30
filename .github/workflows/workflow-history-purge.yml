@@ -1,0 +1,75 @@
+name: Workflow History Purge
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would be deleted without deleting workflow runs."
+        required: false
+        type: boolean
+        default: true
+
+      limit:
+        description: "Maximum number of completed workflow runs to delete (0 = unlimited)."
+        required: false
+        type: string
+        default: "0"
+
+      delay_seconds:
+        description: "Delay in seconds between delete requests."
+        required: false
+        type: string
+        default: "0.25"
+
+      verbosity:
+        description: "Output verbosity (0=summary, 1=progress, 2=detailed)."
+        required: false
+        type: choice
+        options: ["0", "1", "2"]
+        default: "1"
+
+      retries:
+        description: "Number of retries for transient GitHub API failures."
+        required: false
+        type: string
+        default: "3"
+
+      confirm:
+        description: "I understand this will permanently delete GitHub Actions workflow history."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  workflow-history-purge:
+    name: Workflow History Purge
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-history-purge.yml@master
+    with:
+      dry_run: ${{ inputs.dry_run }}
+      limit: ${{ inputs.limit }}
+      delay_seconds: ${{ inputs.delay_seconds }}
+      verbosity: ${{ inputs.verbosity }}
+      retries: ${{ inputs.retries }}
+      confirm: ${{ inputs.confirm }}
+
+  generate-workflow-summary:
+    name: Generate Workflow Summary
+    needs:
+      - workflow-history-purge
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-summary.yml@master
+
+  generate-workflow-notifications:
+    name: Generate Workflow Notifications
+    needs:
+      - generate-workflow-summary
+    if: always()
+    uses: the-lupaxa-project/workflows/.github/workflows/reusable-workflow-notifier.yml@master
+    with:
+      notify_on_results: "failure,timed_out"
+    secrets:
+      slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
