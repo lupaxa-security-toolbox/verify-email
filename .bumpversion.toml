@@ -5,7 +5,7 @@
 # (e.g. pyproject.toml, src/.../version.py).
 
 [tool.bumpversion]
-current_version = "0.1.0"
+current_version = "0.1.1"
 
 # Treat the entire version as a single opaque string part: "version"
 parse = "(?P<version>.*)"
