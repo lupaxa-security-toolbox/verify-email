@@ -7,6 +7,13 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "04:00"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     open-pull-requests-limit: 10
     commit-message:
       prefix: "chore:"
